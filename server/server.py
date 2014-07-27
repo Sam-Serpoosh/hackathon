@@ -4,7 +4,8 @@ from flask import Flask, request
 from cross_domain import crossdomain
 
 REG_FILE_PATH = "/Users/saserpoosh/projects/hackathon/app/data/registration_info.csv"
-REG_HEADER = "firstName,lastName,age,weight,height\n"
+REG_INFO_FIELDS = ["firstName", "lastName", "age", "weight", "height", "sex", "email"]
+REG_HEADER = ",".join(REG_INFO_FIELDS) + "\n"
 
 app = Flask(__name__)
 app.debug = True
@@ -36,25 +37,27 @@ def get_data():
 @app.route("/register/", methods=["POST", "OPTIONS"])
 def register():
   reg_info = get_registration_info(request.form)
-  reg_info_csv = convert_to_csv(reg_info)
+  reg_info_csv = convert_to_csv(reg_info, REG_INFO_FIELDS)
   save_reg_info(reg_info_csv)
   return json.dumps({ "message": "Registered!", "code": "200" })
 
 def get_registration_info(request_form):
   reg_info = dict()
   firstName, lastName, age = "firstName", "lastName", "age"
-  weight, height = "weight", "height"
+  weight, height, sex, email = "weight", "height", "sex", "email"
   reg_info[firstName] = request_form[firstName]
   reg_info[lastName] = request_form[lastName]
   reg_info[age] = request_form[age]
   reg_info[weight] = request_form[weight]
   reg_info[height] = request_form[height]
+  reg_info[sex] = request_form[sex]
+  reg_info[email] = request_form[email]
   return reg_info
 
-def convert_to_csv(info_dict):
+def convert_to_csv(info_dict, keys):
   csv_reg_info = ""
-  for key, value in info_dict.items():
-    csv_reg_info += value + ","
+  for key in keys:
+    csv_reg_info += info_dict[key] + ","
   return csv_reg_info[:-1] + "\n"
 
 def save_reg_info(reg_info_csv):
