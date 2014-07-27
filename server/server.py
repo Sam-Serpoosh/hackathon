@@ -3,16 +3,14 @@ import csv, time, json
 from flask import Flask, request
 from cross_domain import crossdomain
 
-app = Flask("__name__")
+app = Flask(__name__)
 app.debug = True
 
 tripData = []
 
-
 @app.route("/")
 def hello():
     return "Hello World"
-
 
 @app.route("/count", methods=['GET', 'OPTIONS'])
 @crossdomain(origin='*')
@@ -22,34 +20,62 @@ def get_count():
     print query
     return json.dumps(len(list(filter_data(query, range_query))))
 
-
 @app.route("/data", methods=['GET', 'OPTIONS'])
 @crossdomain(origin='*')
 def get_data():
-    query = getQueryObject(request.args)
-    range_query = getRangeQueryObject(request.args)
-    print query
-    return json.dumps(list(filter_data(query, range_query)))
+  query = getQueryObject(request.args)
+  range_query = getRangeQueryObject(request.args)
+  print query
+  return json.dumps(list(filter_data(query, range_query)))
 
+@app.route("/register/", methods=["POST", "OPTIONS"])
+def register():
+  reg_info = get_registration_info(request.form)
+  reg_info_csv = convert_to_csv(reg_info)
+  save_reg_info(reg_info_csv)
+  return json.dumps({ "message": "Registered!", "code": "200" })
+
+def get_registration_info(request_form):
+  reg_info = dict()
+  firstName, lastName, age = "firstName", "lastName", "age"
+  weight, height = "weight", "height"
+  reg_info[firstName] = request_form[firstName]
+  reg_info[lastName] = request_form[lastName]
+  reg_info[age] = request_form[age]
+  reg_info[weight] = request_form[weight]
+  reg_info[height] = request_form[height]
+  return reg_info
+
+def convert_to_csv(info_dict):
+  csv_reg_info = ""
+  for key, value in info_dict.items():
+    csv_reg_info += value + ","
+  return csv_reg_info[:-1] + "\n"
+
+def save_reg_info(reg_info_csv):
+  filename = "/Users/saserpoosh/projects/hackathon/app/data/registration_info.csv"
+  f = open(filename, "a")
+  f.write(str(reg_info_csv))
+  f.close()
 
 def getQueryObject(args):
-    query = dict()
-    for key in ["trip_id", "bikeid", "from_station_id", "to_station_id", "starthour", "endhour"]:
-        if key in args:
-            query[key] = int(args.get(key))
-    for key in ["usertype", "gender", "birthday"]:
-        if key in args:
-            query[key] = args.get(key)
-    return query
+  query = dict()
+  for key in ["trip_id", "bikeid", "from_station_id", "to_station_id", "starthour", "endhour"]:
+    if key in args:
+      query[key] = int(args.get(key))
+  for key in ["usertype", "gender", "birthday"]:
+    if key in args:
+      query[key] = args.get(key)
+  return query
 
 
 def getRangeQueryObject(args):
-    # expected: int(20131231)
-    query = dict()
-    for key in ["start_before", "end_before", "start_after", "end_after", "duration_smaller", "duration_larger"]:
-        if key in args:
-            query[key] = int(args.get(key))
-    return query
+  # expected: int(20131231)
+  query = dict()
+  for key in ["start_before", "end_before", "start_after", "end_after", "duration_smaller", "duration_larger"]:
+    if key in args:
+      query[key] = int(args.get(key))
+  return query
 
 
 def json_matches(jsonObejct, json_query):
@@ -80,10 +106,9 @@ def range_matches(jsonObject, range_query):
 
 
 def filter_data(query, time_query):
-    for item in tripData:
-        if json_matches(item, query) and range_matches(item, time_query):
-            yield item
-
+  for item in tripData:
+    if json_matches(item, query) and range_matches(item, time_query):
+      yield item
 
 def load_trip_data():
     print "Hello"

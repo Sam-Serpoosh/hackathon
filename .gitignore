@@ -3,3 +3,4 @@
 *.pyc
 .idea/
 server/rawdata/*
+app/data/registration_info.csv
