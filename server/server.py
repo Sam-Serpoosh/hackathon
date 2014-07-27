@@ -5,7 +5,7 @@ from cross_domain import crossdomain
 from id_generator import IdGenerator
 
 REG_FILE_PATH = "/Users/saserpoosh/projects/hackathon/app/data/registration_info.csv"
-REG_INFO_FIELDS = ["id", "firstName", "lastName", "age", "weight", "height", "sex", "email"]
+REG_INFO_FIELDS = ["id", "firstName", "lastName", "age", "weight", "height", "sex", "email", "image_url"]
 REG_HEADER = ",".join(REG_INFO_FIELDS) + "\n"
 
 app = Flask(__name__)
@@ -44,7 +44,7 @@ def register():
 def get_registration_info(request_form):
   reg_info = dict()
   firstName, lastName, age = "firstName", "lastName", "age"
-  weight, height, sex, email = "weight", "height", "sex", "email"
+  weight, height, sex, email, image_url = "weight", "height", "sex", "email", "image_url"
   reg_info[firstName] = request_form[firstName]
   reg_info[lastName] = request_form[lastName]
   reg_info[age] = request_form[age]
@@ -52,6 +52,8 @@ def get_registration_info(request_form):
   reg_info[height] = request_form[height]
   reg_info[sex] = request_form[sex]
   reg_info[email] = request_form[email]
+  reg_info[image_url] = request_form[image_url]
+
   return reg_info
 
 def save_reg_info(reg_info):
