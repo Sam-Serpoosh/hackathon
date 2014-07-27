@@ -2,9 +2,10 @@ __author__ = 'rxue'
 import csv, time, json
 from flask import Flask, request
 from cross_domain import crossdomain
+from id_generator import IdGenerator
 
 REG_FILE_PATH = "/Users/saserpoosh/projects/hackathon/app/data/registration_info.csv"
-REG_INFO_FIELDS = ["firstName", "lastName", "age", "weight", "height", "sex", "email"]
+REG_INFO_FIELDS = ["id", "firstName", "lastName", "age", "weight", "height", "sex", "email"]
 REG_HEADER = ",".join(REG_INFO_FIELDS) + "\n"
 
 app = Flask(__name__)
@@ -19,10 +20,10 @@ def hello():
 @app.route("/count", methods=['GET', 'OPTIONS'])
 @crossdomain(origin='*')
 def get_count():
-    query = getQueryObject(request.args)
-    range_query = getRangeQueryObject(request.args)
-    print query
-    return json.dumps(len(list(filter_data(query, range_query))))
+  query = getQueryObject(request.args)
+  range_query = getRangeQueryObject(request.args)
+  print query
+  return json.dumps(len(list(filter_data(query, range_query))))
 
 @app.route("/data", methods=['GET', 'OPTIONS'])
 @crossdomain(origin='*')
@@ -37,8 +38,7 @@ def get_data():
 @app.route("/register/", methods=["POST", "OPTIONS"])
 def register():
   reg_info = get_registration_info(request.form)
-  reg_info_csv = convert_to_csv(reg_info, REG_INFO_FIELDS)
-  save_reg_info(reg_info_csv)
+  save_reg_info(reg_info)
   return json.dumps({ "message": "Registered!", "code": "200" })
 
 def get_registration_info(request_form):
@@ -54,17 +54,20 @@ def get_registration_info(request_form):
   reg_info[email] = request_form[email]
   return reg_info
 
-def convert_to_csv(info_dict, keys):
-  csv_reg_info = ""
-  for key in keys:
-    csv_reg_info += info_dict[key] + ","
-  return csv_reg_info[:-1] + "\n"
-
-def save_reg_info(reg_info_csv):
+def save_reg_info(reg_info):
   write_header_if_not_there()
+  reg_info_csv = convert_to_csv(reg_info, REG_INFO_FIELDS)
   f = open(REG_FILE_PATH, "a")
   f.write(str(reg_info_csv))
   f.close()
+
+def convert_to_csv(info_dict, keys):
+  user_id = IdGenerator(REG_FILE_PATH).generate_id()
+  info_dict["id"] = user_id
+  csv_reg_info = ""
+  for key in keys:
+    csv_reg_info += str(info_dict[key]) + ","
+  return csv_reg_info[:-1] + "\n"
 
 def write_header_if_not_there():
   try:
