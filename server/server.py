@@ -3,6 +3,9 @@ import csv, time, json
 from flask import Flask, request
 from cross_domain import crossdomain
 
+REG_FILE_PATH = "/Users/saserpoosh/projects/hackathon/app/data/registration_info.csv"
+REG_HEADER = "firstName,lastName,age,weight,height\n"
+
 app = Flask(__name__)
 app.debug = True
 
@@ -27,6 +30,8 @@ def get_data():
   range_query = getRangeQueryObject(request.args)
   print query
   return json.dumps(list(filter_data(query, range_query)))
+
+# firstName,lastName,age,weight,height\n
 
 @app.route("/register/", methods=["POST", "OPTIONS"])
 def register():
@@ -53,10 +58,20 @@ def convert_to_csv(info_dict):
   return csv_reg_info[:-1] + "\n"
 
 def save_reg_info(reg_info_csv):
-  filename = "/Users/saserpoosh/projects/hackathon/app/data/registration_info.csv"
-  f = open(filename, "a")
+  write_header_if_not_there()
+  f = open(REG_FILE_PATH, "a")
   f.write(str(reg_info_csv))
   f.close()
+
+def write_header_if_not_there():
+  try:
+    f = open(REG_FILE_PATH, "r")
+    f.readline()
+    f.close()
+  except IOError:
+    f = open(REG_FILE_PATH, "w")
+    f.write(REG_HEADER)
+    f.close()
 
 def getQueryObject(args):
   query = dict()
