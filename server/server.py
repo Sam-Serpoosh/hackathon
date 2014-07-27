@@ -3,6 +3,7 @@ import csv, time, json
 from flask import Flask, request
 from cross_domain import crossdomain
 from id_generator import IdGenerator
+from user_finder import UserFinder
 
 REG_FILE_PATH = "/Users/saserpoosh/projects/hackathon/app/data/registration_info.csv"
 REG_INFO_FIELDS = ["id", "firstName", "lastName", "age", "weight", "height", "sex", "email", "image_url"]
@@ -33,13 +34,24 @@ def get_data():
   print query
   return json.dumps(list(filter_data(query, range_query)))
 
-# firstName,lastName,age,weight,height\n
+# GET a user based on id
+
+@app.route("/users", methods=["GET", "OPTIONS"])
+@crossdomain(origin="*")
+def get_user():
+  query = getQueryObject(request.args)
+  user_id = int(query["id"])
+  user_finder = UserFinder(REG_FILE_PATH)
+  user_info = user_finder.find_user_by_id(user_id)
+  return json.dumps(user_info)
+
+# Register a new user
 
 @app.route("/register/", methods=["POST", "OPTIONS"])
 def register():
   reg_info = get_registration_info(request.form)
-  save_reg_info(reg_info)
-  return json.dumps({ "message": "Registered!", "code": "200" })
+  user_id = save_reg_info(reg_info)
+  return json.dumps({ "message": "Registered wiht id: " + str(user_id), "code": "200" })
 
 def get_registration_info(request_form):
   reg_info = dict()
@@ -62,6 +74,10 @@ def save_reg_info(reg_info):
   f = open(REG_FILE_PATH, "a")
   f.write(str(reg_info_csv))
   f.close()
+  user_info = reg_info_csv.split(",")
+  user_id = int(user_info[0])
+  return user_id
+
 
 def convert_to_csv(info_dict, keys):
   user_id = IdGenerator(REG_FILE_PATH).generate_id()
@@ -81,9 +97,14 @@ def write_header_if_not_there():
     f.write(REG_HEADER)
     f.close()
 
+# End of Registering a new user
+
+# Utility Methods
+
 def getQueryObject(args):
   query = dict()
-  for key in ["trip_id", "bikeid", "from_station_id", "to_station_id", "starthour", "endhour"]:
+  for key in ["trip_id", "bikeid", "from_station_id", "to_station_id",
+      "starthour", "endhour", "id"]:
     if key in args:
       query[key] = int(args.get(key))
   for key in ["usertype", "gender", "birthday"]:
